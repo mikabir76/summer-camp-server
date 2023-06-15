@@ -29,8 +29,25 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const userCollection = client.db("summerCamp").collection("users");
     const classCollection = client.db("summerCamp").collection("classes");
     const myClassCollection = client.db("summerCamp").collection("myclass");
+
+// Users API
+app.get('/users', async(req, res)=>{
+  const result = await userCollection.find().toArray();
+  res.send(result)
+})
+app.post('/users', async(req, res)=>{
+  const users = req.body;
+  const query = {email:users.email};
+  const existingUser = await userCollection.findOne(query)
+  if(existingUser){
+    return res.send({message: 'User Already Exist'})
+  }
+  const result = await userCollection.insertOne(users);
+  res.send(result)
+})
 
     // Class API
 app.get('/classes', async(req, res)=>{
@@ -50,6 +67,13 @@ app.get('/myclass', async(req, res)=>{
 })
 app.post('/myclass', async(req, res)=>{
     const classes = req.body;
+    // console.log(classes)
+    // const query = {email:classes.email};
+    // console.log(query)
+    // const existingUser = await userCollection.findOne(query)
+    // if(existingUser){
+    //   return res.send({message: 'Class Already Exist'})
+    // }
     const result = await myClassCollection.insertOne(classes);
     res.send(result)
 });
