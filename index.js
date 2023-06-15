@@ -55,6 +55,16 @@ async function run() {
     const myClassCollection = client.db("summerCamp").collection("myclass");
 
 
+const verifyAdmin = async (req, res, next)=>{
+  const email = req.decoded.email;
+  const query = {email: email};
+  const user = await userCollection.findOne(query);
+  if(user?.role !== 'admin'){
+    return res.status(403).send({error: true, message: 'Forbidden Access'})
+  }
+  next()
+}
+
 // Json Web Token
 app.post('/jwt', (req, res)=>{
   const user = req.body;
@@ -63,7 +73,7 @@ app.post('/jwt', (req, res)=>{
 })
 
 // Users API
-app.get('/users', async(req, res)=>{
+app.get('/users', verifyJWT, verifyAdmin, async(req, res)=>{
   const result = await userCollection.find().toArray();
   res.send(result)
 })
@@ -75,6 +85,18 @@ app.post('/users', async(req, res)=>{
     return res.send({message: 'User Already Exist'})
   }
   const result = await userCollection.insertOne(users);
+  res.send(result)
+})
+
+app.get('/users/admin/:email', verifyJWT, async(req, res)=>{
+  const email = req.params.email;
+
+  if(req.decoded.email !== email){
+    return res.send({admin: false})
+  }
+  const query = {email: email};
+  const user = await userCollection.findOne(query);
+  const result = {admin: user?.role === 'admin'}
   res.send(result)
 })
 
